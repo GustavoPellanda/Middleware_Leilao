@@ -1,8 +1,7 @@
 > Métodos Servidor:
-	>> Cadastro de Usuário OK
-	> Consulta de leilões ativos
-	>> Cadastro de produto para leilão (código do produto, nome do produto,
-	descrição do produto, preço inicial do produto e tempo final do leilão).
+	>> Cadastro de Usuário OK 1
+	> Consulta de leilões ativos 
+	>> Cadastro de produto para leilão (código do produto, nome do produto, descrição do produto, preço inicial do produto e tempo final do leilão). OK 2
 		Quando cadastrado:
 			Receber notificações de novos lances
 			Receber notificação de encerramento
@@ -13,11 +12,11 @@
 		(apenas crescentes)
 		Ao dar lance:
 			Receber notificações 
-		Assinatura digital OK
+		Assinatura digital OK 1
 >>> Métodos Cliente:
-	> Cadastrar Usuário OK
-	> Cadastrar Produto
-	> Assinar mensagem OK
+	> Cadastrar Usuário OK 1
+	> Cadastrar Produto OK 2
+	> Assinar mensagem OK 1
 	> Dar lance
 	> Consultar Leilões ativos
 
