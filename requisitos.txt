@@ -6,8 +6,7 @@
 			Receber notificações de novos lances
 			Receber notificação de encerramento
 		Finalizar leilão com esgotamento do tempo:
-			Notificar a identificação do produto, nome completo
-			do vencedor do produto, valor negociado
+			Notificar a identificação do produto, nome completo do vencedor do produto, valor negociado
 	>>> Lance em um produto 
 		(apenas crescentes)
 		Ao dar lance:
