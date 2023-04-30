@@ -16,14 +16,8 @@ class Servidor_Leilao:
         print(f"Novo cliente registrado: {nome_cliente}")
         return chave
 
-    def verificar_assinatura(servidor, nome_cliente, mensagem, assinatura):
+    def registrar_produto(servidor, codigo, nome, descricao, preco_inicial, tempo_final, nome_cliente, assinatura):
         chave = servidor.clientes[nome_cliente]
-        expected = hmac.new(chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
-        if not hmac.compare_digest(expected, assinatura):
-            raise ValueError("Assinatura inválida!")
-
-    def registrar_produto(self, codigo, nome, descricao, preco_inicial, tempo_final, nome_cliente, assinatura):
-        chave = self.clientes[nome_cliente]
         mensagem = str(codigo) + nome + descricao + str(preco_inicial) + str(tempo_final)
         assinatura_calculada = hmac.new(chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
 
@@ -38,27 +32,11 @@ class Servidor_Leilao:
             "tempo_final": tempo_final,
             "nome_cliente": nome_cliente
         }
-        self.produtos.append(produto)
+        servidor.produtos.append(produto)
         print(f"Produto '{nome}' registrado com sucesso!")
 
-    def listar_produtos(self):
-        for produto in self.produtos:
-            print(f"Código: {produto['codigo']}")
-            print(f"Nome: {produto['nome']}")
-            print(f"Descrição: {produto['descricao']}")
-            print(f"Preço Inicial: {produto['preco_inicial']}")
-            print(f"Tempo Final: {produto['tempo_final']}")
-            print(f"Nome do Cliente: {produto['nome_cliente']}")
-            print()
-
-@Pyro5.api.expose
-class Produto:
-    def __init__(prod, codigo, nome, descricao, preco_inicial, tempo_final):
-        prod.codigo = codigo
-        prod.nome = nome
-        prod.descricao = descricao
-        prod.preco_inicial = preco_inicial
-        prod.tempo_final = tempo_final
+    def obter_produtos(servidor):
+        return servidor.produtos
 
 def main():
     # Registro de uma instância de Servidor_Leilao no Daemon:
@@ -69,8 +47,6 @@ def main():
     ns = Pyro5.api.locate_ns()
     uri = daemon.register(servidor)
     ns.register("Servidor_Leilao", uri)
-    prod_uri = daemon.register(Produto)
-    ns.register("Produto", prod_uri)
 
     print("Servidor do leilão registrado. Pronto para uso!")
     daemon.requestLoop()
