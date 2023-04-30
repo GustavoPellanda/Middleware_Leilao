@@ -8,6 +8,7 @@ class Cliente_Leilao:
         cliente.nome = nome
         cliente.chave = chave
         cliente.servidor = Pyro5.api.Proxy("PYRONAME:Servidor_Leilao")
+        cliente.produtos = []
 
     def cadastrar_produto(cliente):
         codigo = input("Código do produto: ")
@@ -23,20 +24,31 @@ class Cliente_Leilao:
 
         print(f"Produto '{nome}' registrado com sucesso!")
 
+    def listar_produtos(cliente):
+        cliente.produtos = cliente.servidor.obter_produtos()
+        for produto in cliente.produtos:
+            print(f"Código: {produto['codigo']}")
+            print(f"Nome: {produto['nome']}")
+            print(f"Descrição: {produto['descricao']}")
+            print(f"Preço Inicial: {produto['preco_inicial']}")
+            print(f"Tempo Final: {produto['tempo_final']}")
+            print(f"Nome do Cliente: {produto['nome_cliente']}")
+            print()
+        
     def menu(cliente):
         while True:
             print("\nSelecione uma opção:")
             print("1 - Cadastrar Produto")
-            print("2 - Consultar Leilões")
+            print("2 - Listar Produtos")
             opcao = input("Opção: ")
 
             if opcao == "1":
                 cliente.cadastrar_produto()
             elif opcao == "2":
-                cliente.servidor.listar_produtos()
+                cliente.listar_produtos()
             else:
                 print("Opção inválida. Tente novamente.")
-        
+                
 def main():
     # Registra Cliente_Leilao no Servidor_Leilao
     servidor = Pyro5.api.Proxy("PYRONAME:Servidor_Leilao")
