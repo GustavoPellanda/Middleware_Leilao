@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import time
 
+
 @Pyro5.api.expose
 class Servidor_Leilao:
     def __init__(servidor):
@@ -18,6 +19,7 @@ class Servidor_Leilao:
 
     def registrar_produto(servidor, codigo, nome, descricao, preco_inicial, tempo_final, nome_cliente, assinatura):
         chave = servidor.clientes[nome_cliente]
+        tempo_final_segundos = tempo_final * 3600  # Converter horas em segundos
         mensagem = str(codigo) + nome + descricao + str(preco_inicial) + str(tempo_final)
         assinatura_calculada = hmac.new(chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
 
@@ -29,13 +31,18 @@ class Servidor_Leilao:
             "nome": nome,
             "descricao": descricao,
             "preco_inicial": preco_inicial,
-            "tempo_final": tempo_final,
+            "tempo_final": tempo_final_segundos,
             "nome_cliente": nome_cliente
         }
         servidor.produtos.append(produto)
-        print(f"Produto '{nome}' registrado com sucesso!")
+        print(f"Produto '{nome}' registrado com sucesso com prazo final de {tempo_final} horas.")
 
+
+    # Retorna todos os produtos registrados:
     def obter_produtos(servidor):
+        if not servidor.produtos:
+            return "Nenhum produto cadastrado"
+        
         return servidor.produtos
 
 def main():
