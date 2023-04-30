@@ -15,17 +15,21 @@ class Cliente_Leilao:
         nome = input("Nome do produto: ")
         descricao = input("Descrição do produto: ")
         preco_inicial = input("Preço inicial: ")
-        tempo_final = int(input("Tempo final (em segundos): "))
+        tempo_final = int(input("Tempo final: "))
 
         mensagem = str(codigo) + nome + descricao + str(preco_inicial) + str(tempo_final)
         assinatura = hmac.new(cliente.chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
 
         cliente.servidor.registrar_produto(codigo, nome, descricao, preco_inicial, tempo_final, cliente.nome, assinatura)
 
-        print(f"Produto '{nome}' registrado com sucesso!")
+        print(f"Produto '{nome}' registrado com sucesso com prazo final de {tempo_final} horas.")
 
     def listar_produtos(cliente):
         cliente.produtos = cliente.servidor.obter_produtos()
+        if cliente.produtos == "Nenhum produto cadastrado":
+            print(cliente.produtos)
+            return
+        
         for produto in cliente.produtos:
             print(f"Código: {produto['codigo']}")
             print(f"Nome: {produto['nome']}")
