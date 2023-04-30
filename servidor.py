@@ -7,47 +7,58 @@ import time
 class Servidor_Leilao:
     def __init__(servidor):
         servidor.clientes = {}
+        servidor.produtos = []
 
     def registrar_cliente(servidor, nome_cliente):
         chave = hashlib.sha256(str(time.time()).encode('utf-8')).hexdigest()
         servidor.clientes[nome_cliente] = chave
+
+        print(f"Novo cliente registrado: {nome_cliente}")
         return chave
 
-    @Pyro5.api.expose
     def verificar_assinatura(servidor, nome_cliente, mensagem, assinatura):
         chave = servidor.clientes[nome_cliente]
         expected = hmac.new(chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(expected, assinatura):
             raise ValueError("Assinatura inválida!")
 
-    @Pyro5.api.expose
-    def registrar_produto(servidor, codigo, nome, descricao, preco_inicial, tempo_final, nome_cliente, assinatura):
+    def registrar_produto(self, codigo, nome, descricao, preco_inicial, tempo_final, nome_cliente, assinatura):
+        chave = self.clientes[nome_cliente]
         mensagem = str(codigo) + nome + descricao + str(preco_inicial) + str(tempo_final)
-        servidor.verificar_assinatura(nome_cliente, mensagem, assinatura)
-        print("Produto registrado com sucesso!")
+        assinatura_calculada = hmac.new(chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
+
+        if assinatura != assinatura_calculada:
+            raise ValueError("Assinatura inválida!")
+
+        produto = {
+            "codigo": codigo,
+            "nome": nome,
+            "descricao": descricao,
+            "preco_inicial": preco_inicial,
+            "tempo_final": tempo_final,
+            "nome_cliente": nome_cliente
+        }
+        self.produtos.append(produto)
+        print(f"Produto '{nome}' registrado com sucesso!")
+
+    def listar_produtos(self):
+        for produto in self.produtos:
+            print(f"Código: {produto['codigo']}")
+            print(f"Nome: {produto['nome']}")
+            print(f"Descrição: {produto['descricao']}")
+            print(f"Preço Inicial: {produto['preco_inicial']}")
+            print(f"Tempo Final: {produto['tempo_final']}")
+            print(f"Nome do Cliente: {produto['nome_cliente']}")
+            print()
 
 @Pyro5.api.expose
 class Produto:
-    def __init__(prod, codigo, nome, descricao, preco_inicial, tempo_final, servidor):
+    def __init__(prod, codigo, nome, descricao, preco_inicial, tempo_final):
         prod.codigo = codigo
         prod.nome = nome
         prod.descricao = descricao
         prod.preco_inicial = preco_inicial
         prod.tempo_final = tempo_final
-        prod.servidor = servidor
-
-    @Pyro5.api.expose
-    def registrar_produto(servidor, codigo, nome, descricao, preco_inicial, tempo_final, nome_cliente, assinatura):
-        mensagem = str(codigo) + nome + descricao + str(preco_inicial) + str(tempo_final)
-        chave_cliente = servidor.clientes_registrados.get(nome_cliente)
-        if chave_cliente is None:
-            raise ValueError("Cliente não registrado!")
-        assinatura_valida = hmac.compare_digest(assinatura, hmac.new(chave_cliente.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest())
-        if not assinatura_valida:
-            raise ValueError("Assinatura inválida!")
-        
-        produto = Produto(codigo, nome, descricao, preco_inicial, tempo_final, nome_cliente)
-        servidor.produtos.append(produto)
 
 def main():
     # Registro de uma instância de Servidor_Leilao no Daemon:
