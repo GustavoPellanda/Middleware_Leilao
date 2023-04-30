@@ -1,6 +1,6 @@
 > Métodos Servidor:
 	>> Cadastro de Usuário OK 1
-	> Consulta de leilões ativos 
+	> Consulta de leilões ativos OK 3
 	>> Cadastro de produto para leilão (código do produto, nome do produto, descrição do produto, preço inicial do produto e tempo final do leilão). OK 2
 		Quando cadastrado:
 			Receber notificações de novos lances
@@ -17,7 +17,8 @@
 	> Cadastrar Produto OK 2
 	> Assinar mensagem OK 1
 	> Dar lance
-	> Consultar Leilões ativos
+	> Consultar Leilões ativos OK 3
 
-
-https://pyro5.readthedocs.io/en/latest/tutorials.html#keyconcepts
+4: Dar lance
+5: Finalizar com esgotamento do tempo
+6: Notificações
