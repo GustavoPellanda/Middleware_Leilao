@@ -3,15 +3,15 @@ import hashlib
 import hmac
 import time
 
-
 @Pyro5.api.expose
 class Servidor_Leilao:
     def __init__(servidor):
         servidor.clientes = {}
         servidor.produtos = []
+        servidor.lances = {}
 
     def registrar_cliente(servidor, nome_cliente):
-        chave = hashlib.sha256(str(time.time()).encode('utf-8')).hexdigest()
+        chave = hashlib.sha256(str(time.time()).encode('utf-8')).hexdigest() # Criação da chave
         servidor.clientes[nome_cliente] = chave
 
         print(f"Novo cliente registrado: {nome_cliente}")
@@ -19,13 +19,12 @@ class Servidor_Leilao:
 
     def registrar_produto(servidor, codigo, nome, descricao, preco_inicial, tempo_final, nome_cliente, assinatura):
         chave = servidor.clientes[nome_cliente]
-        tempo_final_segundos = tempo_final * 3600  # Converter horas em segundos
         mensagem = str(codigo) + nome + descricao + str(preco_inicial) + str(tempo_final)
         assinatura_calculada = hmac.new(chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
-
         if assinatura != assinatura_calculada:
             raise ValueError("Assinatura inválida!")
 
+        tempo_final_segundos = tempo_final * 3600  # Converter horas em segundos
         produto = {
             "codigo": codigo,
             "nome": nome,
@@ -35,8 +34,8 @@ class Servidor_Leilao:
             "nome_cliente": nome_cliente
         }
         servidor.produtos.append(produto)
+        
         print(f"Produto '{nome}' registrado com sucesso com prazo final de {tempo_final} horas.")
-
 
     # Retorna todos os produtos registrados:
     def obter_produtos(servidor):
@@ -44,6 +43,27 @@ class Servidor_Leilao:
             return "Nenhum produto cadastrado"
         
         return servidor.produtos
+    
+    def fazer_lance(servidor, codigo, lance, nome_cliente, assinatura):
+        chave = servidor.clientes.get(nome_cliente)
+        mensagem = str(codigo) + str(lance)
+        assinatura_calculada = hmac.new(chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
+        if assinatura != assinatura_calculada:
+            raise ValueError("Assinatura inválida!")
+
+        if codigo in servidor.lances:
+            if lance <= servidor.lances[codigo]["lance"]:
+                print(f"Lance de {nome_cliente} não supera lance anterior no produto {codigo}.")
+                return
+        
+        lance_registro = {
+            "codigo_produto": codigo,
+            "lance": lance,
+            "nome_cliente": nome_cliente
+        }
+        servidor.lances[codigo] = lance_registro
+
+        print(f"Lance de {nome_cliente} registrado no produto {codigo} com valor {lance}")
 
 def main():
     # Registro de uma instância de Servidor_Leilao no Daemon:
