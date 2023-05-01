@@ -44,15 +44,29 @@ class Cliente_Leilao:
             print("\nSelecione uma opção:")
             print("1 - Cadastrar Produto")
             print("2 - Listar Produtos")
+            print("3 - Fazer um lance")
             opcao = input("Opção: ")
 
             if opcao == "1":
                 cliente.cadastrar_produto()
             elif opcao == "2":
                 cliente.listar_produtos()
+            elif opcao == "3":
+                cliente.enviar_lance()
             else:
                 print("Opção inválida. Tente novamente.")
-                
+
+    def enviar_lance(cliente):
+        codigo = input("Código do produto: ")
+        lance = input("Valor do lance: ")
+
+        mensagem = str(codigo) + str(lance)
+        assinatura = hmac.new(cliente.chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
+
+        cliente.servidor.fazer_lance(codigo, lance, cliente.nome, assinatura)
+
+        print(f"Lance de {lance} enviado ao produto de código {codigo}.")
+
 def main():
     # Registra Cliente_Leilao no Servidor_Leilao
     servidor = Pyro5.api.Proxy("PYRONAME:Servidor_Leilao")
