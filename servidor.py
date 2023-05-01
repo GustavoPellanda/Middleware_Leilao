@@ -2,6 +2,7 @@ import Pyro5.api
 import hashlib
 import hmac
 import time
+import threading
 
 @Pyro5.api.expose
 class Servidor_Leilao:
@@ -65,6 +66,17 @@ class Servidor_Leilao:
 
         print(f"Lance de {nome_cliente} registrado no produto {codigo} com valor {lance}")
 
+    def esgotar_leiloes(servidor):
+        while True:
+            tempo_atual = time.time()
+            for produto in servidor.produtos:
+                if produto['tempo_final'] <= tempo_atual:
+                    codigo = produto['codigo']
+                    servidor.lances.pop(codigo, None) # Deleta o produto
+                    servidor.produtos.remove(produto) # Deleta o produto
+                    print(f"Lances do produto {codigo} expirados.")
+            time.sleep(60)  # verifica a cada 60 segundos
+
 def main():
     # Registro de uma instância de Servidor_Leilao no Daemon:
     daemon = Pyro5.api.Daemon()
@@ -76,6 +88,11 @@ def main():
     ns.register("Servidor_Leilao", uri)
 
     print("Servidor do leilão registrado. Pronto para uso!")
+    
+    # Iniciando a thread que verifica os prazos dos leilões:
+    thread_verificacao = threading.Thread(target=servidor.esgotar_leiloes)
+    thread_verificacao.start()
+    
     daemon.requestLoop()
 
 if __name__ == '__main__':
