@@ -21,7 +21,7 @@
 
 4: Dar lance OK
 5: Finalizar com esgotamento do tempo OK
-6: Atualizar os preços
+6: Atualizar os preços OK
 7: Notificações
 8: Casos de erro
 	nenhum produto cadastrado OK
