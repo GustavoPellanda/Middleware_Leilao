@@ -25,5 +25,5 @@
 7: Notificações
 8: Casos de erro
 	nenhum produto cadastrado OK
-	lance de valor invalido
-	cadastro errado
+	lance de valor invalido OK
+	cadastro errado de um produto
