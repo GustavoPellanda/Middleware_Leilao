@@ -31,13 +31,14 @@ class Cliente_Leilao:
             return
         
         for produto in cliente.produtos:
+            print()
             print(f"Código: {produto['codigo']}")
             print(f"Nome: {produto['nome']}")
             print(f"Descrição: {produto['descricao']}")
             print(f"Preço Inicial: {produto['preco_inicial']}")
-            print(f"Tempo Final: {produto['tempo_final']}")
+            print(f"Prazo Final: {produto['prazo_final']}")
+            print(f"Tempo Restante: {produto['tempo_restante']:.2f} segundos")
             print(f"Nome do Cliente: {produto['nome_cliente']}")
-            print()
         
     def menu(cliente):
         while True:
@@ -66,7 +67,7 @@ class Cliente_Leilao:
         cliente.servidor.fazer_lance(codigo, lance, cliente.nome, assinatura)
 
         print(f"Lance de {lance} enviado ao produto de código {codigo}.")
-
+                
 def main():
     # Registra Cliente_Leilao no Servidor_Leilao
     servidor = Pyro5.api.Proxy("PYRONAME:Servidor_Leilao")
