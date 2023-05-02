@@ -5,7 +5,7 @@
 		Quando cadastrado:
 			Receber notificações de novos lances
 			Receber notificação de encerramento
-		Finalizar leilão com esgotamento do tempo:
+		Finalizar leilão com esgotamento do tempo: OK 5
 			Notificar a identificação do produto, nome completo do vencedor do produto, valor negociado
 	>>> Lance em um produto OK 4
 		(apenas crescentes)
@@ -20,9 +20,10 @@
 	> Consultar Leilões ativos OK 3
 
 4: Dar lance OK
-5: Notificações
-6: Finalizar com esgotamento do tempo
-7: Casos de erro
+5: Finalizar com esgotamento do tempo OK
+6: Atualizar os preços
+7: Notificações
+8: Casos de erro
 	nenhum produto cadastrado OK
 	lance de valor invalido
 	cadastro errado
