@@ -61,7 +61,7 @@ class Servidor_Leilao:
         if codigo in servidor.lances:
             if lance <= servidor.lances[codigo]["lance"]:
                 print(f"Lance de {nome_cliente} não supera lance anterior no produto {codigo}.")
-                return
+                return False
 
         # Atualiza o registro de lances:
         lance_registro = {
@@ -77,7 +77,8 @@ class Servidor_Leilao:
                 produto["preco_atual"] = lance
                 break
 
-        print(f"Lance de {nome_cliente} registrado no produto {codigo} com valor {lance}")
+        print(f"Lance de {nome_cliente} registrado no produto {codigo} com valor R${lance:.2f}")
+        return True
 
     # Calcula o tempo restante dos leilões:
     def esgotar_leiloes(servidor):
