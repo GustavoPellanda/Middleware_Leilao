@@ -34,13 +34,14 @@ class Servidor_Leilao:
             "nome": nome,
             "descricao": descricao,
             "preco_inicial": preco_inicial,
+            "preco_atual": preco_inicial, # Será atualizado quando lances forem feitos
             "prazo_final": prazo_final,
             "tempo_restante": prazo_final - time.time(),  # Calcular o tempo restante em segundos
             "nome_cliente": nome_cliente
         }
         servidor.produtos.append(produto)
         
-        print(f"Produto '{nome}' registrado por '{nome_cliente}' com prazo final de {tempo_final} horas.")
+        print(f"Produto '{nome}' registrado por '{nome_cliente}' com prazo final de {tempo_final} horas e preço inicial de R${preco_inicial:.2f}") 
 
     # Retorna todos os produtos registrados:
     def obter_produtos(servidor):
@@ -51,23 +52,30 @@ class Servidor_Leilao:
     
     def fazer_lance(servidor, codigo, lance, nome_cliente, assinatura):
         chave = servidor.clientes.get(nome_cliente)
-        mensagem = str(codigo) + str(lance)
+        mensagem = str(codigo) + str(int(lance))
         assinatura_calculada = hmac.new(chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
         if assinatura != assinatura_calculada:
             raise ValueError("Assinatura inválida!")
 
-        # Verifica se o lance é maior que os anteriores
+        # Verifica se o lance é maior que os anteriores:
         if codigo in servidor.lances:
             if lance <= servidor.lances[codigo]["lance"]:
                 print(f"Lance de {nome_cliente} não supera lance anterior no produto {codigo}.")
                 return
-        
+
+        # Atualiza o registro de lances:
         lance_registro = {
             "codigo_produto": codigo,
             "lance": lance,
             "nome_cliente": nome_cliente
         }
         servidor.lances[codigo] = lance_registro
+
+        # Atualiza o preço atual do produto:
+        for produto in servidor.produtos:
+            if produto["codigo"] == codigo:
+                produto["preco_atual"] = lance
+                break
 
         print(f"Lance de {nome_cliente} registrado no produto {codigo} com valor {lance}")
 
