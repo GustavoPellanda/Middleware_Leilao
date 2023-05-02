@@ -40,6 +40,19 @@ class Cliente_Leilao:
             print(f"Tempo Restante: {produto['prazo_final']:.2f}")
             print(f"Prazo Final: {produto['tempo_restante']:.2f} segundos")
             print(f"Nome do Cliente: {produto['nome_cliente']}")
+
+    def enviar_lance(cliente):
+        codigo = input("Código do produto: ")
+        lance = int(input("Valor do lance: "))
+
+        mensagem = str(codigo) + str(int(lance))
+        assinatura = hmac.new(cliente.chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
+
+        # Verifica se o lance foi aprovado:
+        if not cliente.servidor.fazer_lance(codigo, lance, cliente.nome, assinatura):
+            print(f"Lance de R${lance:.2f} não supera lance anterior no produto de código {codigo}.")
+            return
+        print(f"Lance de R${lance:.2f} enviado ao produto de código {codigo}.")
         
     def menu(cliente):
         while True:
@@ -57,17 +70,6 @@ class Cliente_Leilao:
                 cliente.enviar_lance()
             else:
                 print("Opção inválida. Tente novamente.")
-
-    def enviar_lance(cliente):
-        codigo = input("Código do produto: ")
-        lance = int(input("Valor do lance: "))
-
-        mensagem = str(codigo) + str(int(lance))
-        assinatura = hmac.new(cliente.chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
-
-        cliente.servidor.fazer_lance(codigo, lance, cliente.nome, assinatura)
-
-        print(f"Lance de R${lance:.2f} enviado ao produto de código {codigo}.")
 
 def main():
     # Registra Cliente_Leilao no Servidor_Leilao
