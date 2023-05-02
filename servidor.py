@@ -24,19 +24,23 @@ class Servidor_Leilao:
         assinatura_calculada = hmac.new(chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
         if assinatura != assinatura_calculada:
             raise ValueError("Assinatura inválida!")
-
-        tempo_final_segundos = tempo_final * 3600  # Converter horas em segundos
+        
+        # Calcula o tempo limite do leilão
+        tempo_final_segundos = tempo_final * 3600
+        prazo_final = time.time() + tempo_final_segundos 
+        
         produto = {
             "codigo": codigo,
             "nome": nome,
             "descricao": descricao,
             "preco_inicial": preco_inicial,
-            "tempo_final": tempo_final_segundos,
+            "prazo_final": prazo_final,
+            "tempo_restante": prazo_final - time.time(),  # Calcular o tempo restante em segundos
             "nome_cliente": nome_cliente
         }
         servidor.produtos.append(produto)
         
-        print(f"Produto '{nome}' registrado com sucesso com prazo final de {tempo_final} horas.")
+        print(f"Produto '{nome}' registrado por '{nome_cliente}' com prazo final de {tempo_final} horas.")
 
     # Retorna todos os produtos registrados:
     def obter_produtos(servidor):
@@ -52,6 +56,7 @@ class Servidor_Leilao:
         if assinatura != assinatura_calculada:
             raise ValueError("Assinatura inválida!")
 
+        # Verifica se o lance é maior que os anteriores
         if codigo in servidor.lances:
             if lance <= servidor.lances[codigo]["lance"]:
                 print(f"Lance de {nome_cliente} não supera lance anterior no produto {codigo}.")
@@ -66,17 +71,22 @@ class Servidor_Leilao:
 
         print(f"Lance de {nome_cliente} registrado no produto {codigo} com valor {lance}")
 
+    # Calcula o tempo restante dos leilões:
     def esgotar_leiloes(servidor):
         while True:
-            tempo_atual = time.time()
+            agora = time.time()
             for produto in servidor.produtos:
-                if produto['tempo_final'] <= tempo_atual:
+                tempo_restante = produto['prazo_final'] - agora
+                if tempo_restante <= 0:
+                    # Deleta:
                     codigo = produto['codigo']
-                    servidor.lances.pop(codigo, None) # Deleta o produto
-                    servidor.produtos.remove(produto) # Deleta o produto
+                    servidor.lances.pop(codigo, None)
+                    servidor.produtos.remove(produto)
                     print(f"Lances do produto {codigo} expirados.")
-            time.sleep(60)  # verifica a cada 60 segundos
-
+                else:
+                    print(f"Tempo restante para o produto {produto['codigo']}: {tempo_restante:.2f} segundos")
+            time.sleep(60) #Tempo entre as verificações
+                    
 def main():
     # Registro de uma instância de Servidor_Leilao no Daemon:
     daemon = Pyro5.api.Daemon()
