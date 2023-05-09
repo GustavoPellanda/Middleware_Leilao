@@ -1,10 +1,9 @@
 import Pyro5.api
+import threading
 
-@Pyro5.api.expose
 class Cliente_Leilao:
-    def __init__(self, nome, chave):
+    def __init__(self, nome):
         self.nome = nome
-        self.chave = chave
         self.servidor = Pyro5.api.Proxy("PYRONAME:Servidor_Leilao")
         self.produtos = [] # Será utilizado para listar os produtos
 
@@ -61,12 +60,23 @@ class Cliente_Leilao:
             else:
                 print("Opção inválida. Tente novamente.")
 
+class Callback_Cliente:
+    @Pyro5.api.expose
+    def notificar(self, notificacao):
+        print("Notificação Recebida:", notificacao)
+
 def main():
     # Registra Cliente_Leilao no Servidor_Leilao
     servidor = Pyro5.api.Proxy("PYRONAME:Servidor_Leilao")
-    chave = servidor.registrar_cliente("Cliente01")
-    # Envia a chave recebida do servidor para o objeto de Cliente_Leilao
-    cliente = Cliente_Leilao("Cliente01", chave)
+    servidor.registrar_cliente("Cliente01")
+    cliente = Cliente_Leilao("Cliente01")
+    
+    # Criação do Callback
+    callback = Callback_Cliente()
+    daemon = Pyro5.api.Daemon()
+    callback_uri = Pyro5.api.URI(str(daemon.register(callback)))
+    servidor.registrar_callback(callback_uri)
+
     cliente.menu()
 
 if __name__ == '__main__':
