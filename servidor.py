@@ -1,30 +1,19 @@
 import Pyro5.api
-import hashlib
-import hmac
 import time
 import threading
 
 @Pyro5.api.expose
 class Servidor_Leilao:
     def __init__(self):
-        self.clientes = {}
+        self.clientes = []
         self.produtos = []
         self.lances = {}
 
     def registrar_cliente(self, nome_cliente):
-        chave = hashlib.sha256(str(time.time()).encode('utf-8')).hexdigest() # Criação da chave
-        self.clientes[nome_cliente] = chave
-
+        self.clientes.append(nome_cliente)
         print(f"Novo cliente registrado: {nome_cliente}")
-        return chave
 
-    def registrar_produto(self, codigo, nome, descricao, preco_inicial, tempo_final, nome_cliente, assinatura):
-        chave = self.clientes[nome_cliente]
-        mensagem = str(codigo) + nome + descricao + str(preco_inicial) + str(tempo_final)
-        assinatura_calculada = hmac.new(chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
-        if assinatura != assinatura_calculada:
-            raise ValueError("Assinatura inválida!")
-        
+    def registrar_produto(self, codigo, nome, descricao, preco_inicial, tempo_final, nome_cliente):
         # Calcula o tempo limite do leilão
         tempo_final_segundos = tempo_final * 3600
         prazo_final = time.time() + tempo_final_segundos 
@@ -50,13 +39,7 @@ class Servidor_Leilao:
         
         return self.produtos
     
-    def fazer_lance(self, codigo, lance, nome_cliente, assinatura):
-        chave = self.clientes.get(nome_cliente)
-        mensagem = str(codigo) + str(int(lance))
-        assinatura_calculada = hmac.new(chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
-        if assinatura != assinatura_calculada:
-            raise ValueError("Assinatura inválida!")
-
+    def fazer_lance(self, codigo, lance, nome_cliente):
         # Verifica se o lance é maior que os anteriores:
         if codigo in self.lances:
             if lance <= self.lances[codigo]["lance"]:
@@ -94,7 +77,7 @@ class Servidor_Leilao:
                     print(f"Lances do produto {codigo} expirados.")
                 else:
                     print(f"Tempo restante para o produto {produto['codigo']}: {tempo_restante:.2f} segundos")
-            time.sleep(60) #Tempo entre as verificações
+            time.sleep(10) #Tempo entre as verificações
                     
 def main():
     # Registro de uma instância de Servidor_Leilao no Daemon:
