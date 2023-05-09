@@ -1,6 +1,5 @@
 import Pyro5.api
-import hashlib
-import hmac
+import threading
 
 @Pyro5.api.expose
 class Cliente_Leilao:
@@ -17,10 +16,7 @@ class Cliente_Leilao:
         preco_inicial = int(input("Preço inicial: "))
         tempo_final = int(input("Tempo final em horas: "))
 
-        mensagem = str(codigo) + nome + descricao + str(preco_inicial) + str(tempo_final)
-        assinatura = hmac.new(self.chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
-
-        self.servidor.registrar_produto(codigo, nome, descricao, preco_inicial, tempo_final, self.nome, assinatura)
+        self.servidor.registrar_produto(codigo, nome, descricao, preco_inicial, tempo_final, self.nome)
 
         print(f"Produto '{nome}' registrado com prazo final de {tempo_final} horas e preço inicial de R${preco_inicial:.2f}")
 
@@ -43,11 +39,8 @@ class Cliente_Leilao:
         codigo = input("Código do produto: ")
         lance = int(input("Valor do lance: "))
 
-        mensagem = str(codigo) + str(int(lance))
-        assinatura = hmac.new(self.chave.encode('utf-8'), mensagem.encode('utf-8'), hashlib.sha256).hexdigest()
-
         # Verifica se o lance foi aprovado:
-        if not self.servidor.fazer_lance(codigo, lance, self.nome, assinatura):
+        if not self.servidor.fazer_lance(codigo, lance, self.nome):
             print(f"Lance de R${lance:.2f} não supera lance anterior no produto de código {codigo}.")
             return
         print(f"Lance de R${lance:.2f} enviado ao produto de código {codigo}.")
