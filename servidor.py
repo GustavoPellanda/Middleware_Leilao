@@ -8,10 +8,19 @@ class Servidor_Leilao:
         self.clientes = []
         self.produtos = []
         self.lances = {}
+        self.callback_uri = None
+
+    def registrar_callback(self, callback):
+            print("Callback recebido do cliente", callback)
+            self.callback_uri = callback
 
     def registrar_cliente(self, nome_cliente):
         self.clientes.append(nome_cliente)
         print(f"Novo cliente registrado: {nome_cliente}")
+
+        if self.callback_uri is not None:
+            callback = Pyro5.api.Proxy(self.callback_uri)
+            callback.notificar("Cliente registrado.")
 
     def registrar_produto(self, codigo, nome, descricao, preco_inicial, tempo_final, nome_cliente):
         # Calcula o tempo limite do leilão
