@@ -1,5 +1,4 @@
 import Pyro5.api
-import threading
 
 @Pyro5.api.expose
 class Cliente_Leilao:
