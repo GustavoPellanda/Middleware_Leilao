@@ -64,30 +64,30 @@ class Cliente_Leilao:
 @Pyro5.api.callback
 class cliente_callback(object):
     def notificar(self, notificacao):
-        print("Notificação Recebida:", notificacao)
+        print("\nNotificação Recebida:", notificacao)
 
     def loopThread(self, daemon):
         daemon.requestLoop()
 
 def main():
-    # Obtém a referência da aplicação do servidor no serviço de nomes
+    # Obtém a referência da aplicação do servidor no serviço de nomes:
     ns = Pyro5.api.locate_ns()
     uri = ns.lookup("Servidor_Leilao")
     servidor = Pyro5.api.Proxy(uri)
 
-    # Inicializa o Pyro daemon e registra o objeto Pyro callback nele.
+    # Inicializa o Pyro daemon e registra o objeto Pyro callback nele:
     daemon = Pyro5.server.Daemon()
     callback = cliente_callback()
     referenciaCliente = daemon.register(callback)
     
-    # Registra Cliente_Leilao no Servidor_Leilao
+    # Registra Cliente_Leilao no Servidor_Leilao:
     servidor.registrar_cliente("Cliente01", referenciaCliente)
     cliente = Cliente_Leilao("Cliente01")
 
-    # Inicializa a thread para receber notificações do servidor
+    # Inicializa a thread para receber notificações do servidor:
     threading.Thread(target=callback.loopThread, args=(daemon,)).start()
 
-    # Mantém a thread principal em execução
+    # Mantém a thread principal em execução:
     while True:
         cliente.menu()
 
