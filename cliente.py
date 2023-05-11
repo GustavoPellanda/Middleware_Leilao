@@ -60,24 +60,36 @@ class Cliente_Leilao:
             else:
                 print("Opção inválida. Tente novamente.")
 
-class Callback_Cliente:
-    @Pyro5.api.expose
+@Pyro5.api.expose
+@Pyro5.api.callback
+class cliente_callback(object):
     def notificar(self, notificacao):
         print("Notificação Recebida:", notificacao)
 
-def main():
-    # Registra Cliente_Leilao no Servidor_Leilao
-    servidor = Pyro5.api.Proxy("PYRONAME:Servidor_Leilao")
-    servidor.registrar_cliente("Cliente01")
-    cliente = Cliente_Leilao("Cliente01")
-    
-    # Criação do Callback
-    callback = Callback_Cliente()
-    daemon = Pyro5.api.Daemon()
-    callback_uri = Pyro5.api.URI(str(daemon.register(callback)))
-    servidor.registrar_callback(callback_uri)
+    def loopThread(self, daemon):
+        daemon.requestLoop()
 
-    cliente.menu()
+def main():
+    # Obtém a referência da aplicação do servidor no serviço de nomes
+    ns = Pyro5.api.locate_ns()
+    uri = ns.lookup("Servidor_Leilao")
+    servidor = Pyro5.api.Proxy(uri)
+
+    # Inicializa o Pyro daemon e registra o objeto Pyro callback nele.
+    daemon = Pyro5.server.Daemon()
+    callback = cliente_callback()
+    referenciaCliente = daemon.register(callback)
+    
+    # Registra Cliente_Leilao no Servidor_Leilao
+    servidor.registrar_cliente("Cliente01", referenciaCliente)
+    cliente = Cliente_Leilao("Cliente01")
+
+    # Inicializa a thread para receber notificações do servidor
+    threading.Thread(target=callback.loopThread, args=(daemon,)).start()
+
+    # Mantém a thread principal em execução
+    while True:
+        cliente.menu()
 
 if __name__ == '__main__':
     main()
