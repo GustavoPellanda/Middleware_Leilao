@@ -2,26 +2,25 @@ import Pyro5.api
 import time
 import threading
 
-@Pyro5.api.expose
-class Servidor_Leilao:
+@Pyro5.api.behavior(instance_mode="single")
+class Servidor_Leilao(object):
     def __init__(self):
-        self.clientes = []
+        self.clientes = {}
         self.produtos = []
         self.lances = {}
-        self.callback_uri = None
-
-    def registrar_callback(self, callback):
-            print("Callback recebido do cliente", callback)
-            self.callback_uri = callback
-
-    def registrar_cliente(self, nome_cliente):
-        self.clientes.append(nome_cliente)
+    
+    @Pyro5.api.expose
+    def registrar_cliente(self, nome_cliente, referenciaCliente):
+        self.clientes[referenciaCliente] = nome_cliente
         print(f"Novo cliente registrado: {nome_cliente}")
 
-        if self.callback_uri is not None:
-            callback = Pyro5.api.Proxy(self.callback_uri)
-            callback.notificar("Cliente registrado.")
+    @Pyro5.api.expose
+    def notificar_todos(self, mensagem):
+        for referenciaCliente in self.clientes:
+            cliente = Pyro5.api.Proxy(referenciaCliente)
+            cliente.notificar(mensagem)
 
+    @Pyro5.api.expose
     def registrar_produto(self, codigo, nome, descricao, preco_inicial, tempo_final, nome_cliente):
         # Calcula o tempo limite do leilão
         tempo_final_segundos = tempo_final * 3600
@@ -39,15 +38,18 @@ class Servidor_Leilao:
         }
         self.produtos.append(produto)
         
+        self.notificar_todos("Novo produto foi registrado.")
         print(f"Produto '{nome}' registrado por '{nome_cliente}' com prazo final de {tempo_final} horas e preço inicial de R${preco_inicial:.2f}") 
 
     # Retorna todos os produtos registrados:
+    @Pyro5.api.expose
     def obter_produtos(self):
         if not self.produtos:
             return "Nenhum produto cadastrado"
         
         return self.produtos
     
+    @Pyro5.api.expose
     def fazer_lance(self, codigo, lance, nome_cliente):
         # Verifica se o lance é maior que os anteriores:
         if codigo in self.lances:
@@ -89,22 +91,21 @@ class Servidor_Leilao:
             time.sleep(10) #Tempo entre as verificações
                     
 def main():
-    # Registro de uma instância de Servidor_Leilao no Daemon:
-    daemon = Pyro5.api.Daemon()
     servidor = Servidor_Leilao()
-
-    # Registro dos métodos no Name Server:
+    
+    # Registra a aplicação do servidor no serviço de nomes:
+    daemon = Pyro5.server.Daemon()
     ns = Pyro5.api.locate_ns()
     uri = daemon.register(servidor)
     ns.register("Servidor_Leilao", uri)
 
     print("Servidor do leilão registrado. Pronto para uso!")
-    
+
     # Iniciando a thread que verifica os prazos dos leilões:
     thread_verificacao = threading.Thread(target=servidor.esgotar_leiloes)
     thread_verificacao.start()
-    
-    daemon.requestLoop()
 
+    daemon.requestLoop()
+    
 if __name__ == '__main__':
     main()
