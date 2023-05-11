@@ -23,7 +23,7 @@ class Servidor_Leilao(object):
     @Pyro5.api.expose
     def registrar_produto(self, codigo, nome, descricao, preco_inicial, tempo_final, nome_cliente):
         # Calcula o tempo limite do leilão
-        tempo_final_segundos = tempo_final * 3600
+        tempo_final_segundos = tempo_final * 1 #3600
         prazo_final = time.time() + tempo_final_segundos 
         
         produto = {
@@ -38,7 +38,7 @@ class Servidor_Leilao(object):
         }
         self.produtos.append(produto)
         
-        self.notificar_todos("Novo produto foi registrado.")
+        self.notificar_todos(f"Novo produto '{nome}' foi registrado.\n")
         print(f"Produto '{nome}' registrado por '{nome_cliente}' com prazo final de {tempo_final} horas e preço inicial de R${preco_inicial:.2f}") 
 
     # Retorna todos os produtos registrados:
@@ -72,6 +72,7 @@ class Servidor_Leilao(object):
                 break
 
         print(f"Lance de {nome_cliente} registrado no produto {codigo} com valor R${lance:.2f}")
+        self.notificar_todos(f"Novo lance feito no produto {codigo}.\n")
         return True
 
     # Calcula o tempo restante dos leilões:
@@ -83,9 +84,11 @@ class Servidor_Leilao(object):
                 if tempo_restante <= 0:
                     # Deleta:
                     codigo = produto['codigo']
+                    nome = produto['nome']
                     self.lances.pop(codigo, None)
                     self.produtos.remove(produto)
                     print(f"Lances do produto {codigo} expirados.")
+                    self.notificar_todos(f"O leilão do produto {nome} acabou.\n")
                 else:
                     print(f"Tempo restante para o produto {produto['codigo']}: {tempo_restante:.2f} segundos")
             time.sleep(10) #Tempo entre as verificações
