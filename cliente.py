@@ -1,11 +1,15 @@
 import Pyro5.api
 import threading
+from Crypto.Signature import pkcs1_15
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
 
 class Cliente_Leilao:
     def __init__(self, nome):
         self.nome = nome
         self.servidor = Pyro5.api.Proxy("PYRONAME:Servidor_Leilao")
         self.produtos = [] # Será utilizado para listar os produtos
+        self.chave_privada = RSA.import_key(open('private_key.der').read())
 
     def cadastrar_produto(self):
         codigo = input("Código do produto: ")
@@ -37,8 +41,14 @@ class Cliente_Leilao:
         codigo = input("Código do produto: ")
         lance = int(input("Valor do lance: "))
 
+        # Gera a assinatura:
+        mensagem = f"{self.nome}-{codigo}-{lance}"
+        h = SHA256.new(mensagem.encode())
+        assinatura = pkcs1_15.new(self.chave_privada).sign(h)
+        assinatura_bytes = bytes(assinatura)
+
         # Verifica se o lance foi aprovado:
-        if not self.servidor.fazer_lance(codigo, lance, self.nome):
+        if not self.servidor.fazer_lance(codigo, lance, self.nome, assinatura_bytes):
             print(f"Lance de R${lance:.2f} não supera lance anterior no produto de código {codigo}.")
             return
         print(f"Lance de R${lance:.2f} enviado ao produto de código {codigo}.")
