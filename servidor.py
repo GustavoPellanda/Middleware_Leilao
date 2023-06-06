@@ -1,6 +1,10 @@
 import Pyro5.api
 import time
 import threading
+from Crypto.Signature import pkcs1_15
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
+import base64
 
 @Pyro5.api.behavior(instance_mode="single")
 class Servidor_Leilao(object):
@@ -8,6 +12,7 @@ class Servidor_Leilao(object):
         self.clientes = {}
         self.produtos = []
         self.lances = {}
+        self.chave_publica = RSA.import_key(open('public_key.der').read())
     
     @Pyro5.api.expose
     def registrar_cliente(self, nome_cliente, referenciaCliente):
@@ -50,7 +55,18 @@ class Servidor_Leilao(object):
         return self.produtos
     
     @Pyro5.api.expose
-    def fazer_lance(self, codigo, lance, nome_cliente):
+    def fazer_lance(self, codigo, lance, nome_cliente, signature):
+        # Verifica a assinatura
+        mensagem = f"{nome_cliente}-{codigo}-{lance}"
+        hash_mensagem = SHA256.new(mensagem.encode())  # Reconstrói a mensagem
+
+        try:
+            assinatura_bytes = base64.b64decode(signature['data'])  # Decodifica o valor da assinatura de base64
+            pkcs1_15.new(self.chave_publica).verify(hash_mensagem, assinatura_bytes)
+        except (ValueError, TypeError):
+            print(f"A assinatura do lance de {nome_cliente} não é válida.")
+            return False
+        
         # Verifica se o lance é maior que os anteriores:
         if codigo in self.lances:
             if lance <= self.lances[codigo]["lance"]:
